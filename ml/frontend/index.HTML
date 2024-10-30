@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IPL Score Prediction</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h1>IPL Score Prediction</h1>
+        <form id="prediction-form">
+            <div class="form-group">
+                <label for="batting_team">Batting Team:</label>
+                <select id="batting_team" name="batting_team">
+                    <option value="Chennai Super Kings">Chennai Super Kings</option>
+                    <option value="Delhi Daredevils">Delhi Daredevils</option>
+                    <option value="Kings XI Punjab">Kings XI Punjab</option>
+                    <option value="Kolkata Knight Riders">Kolkata Knight Riders</option>
+                    <option value="Mumbai Indians">Mumbai Indians</option>
+                    <option value="Rajasthan Royals">Rajasthan Royals</option>
+                    <option value="Royal Challengers Bangalore">Royal Challengers Bangalore</option>
+                    <option value="Sunrisers Hyderabad">Sunrisers Hyderabad</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="bowling_team">Bowling Team:</label>
+                <select id="bowling_team" name="bowling_team">
+                    <option value="Chennai Super Kings">Chennai Super Kings</option>
+                    <option value="Delhi Daredevils">Delhi Daredevils</option>
+                    <option value="Kings XI Punjab">Kings XI Punjab</option>
+                    <option value="Kolkata Knight Riders">Kolkata Knight Riders</option>
+                    <option value="Mumbai Indians">Mumbai Indians</option>
+                    <option value="Rajasthan Royals">Rajasthan Royals</option>
+                    <option value="Royal Challengers Bangalore">Royal Challengers Bangalore</option>
+                    <option value="Sunrisers Hyderabad">Sunrisers Hyderabad</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="overs">Overs:</label>
+                <input type="number" id="overs" name="overs" step="0.1" min="5" max="20">
+            </div>
+
+            <div class="form-group">
+                <label for="runs">Runs:</label>
+                <input type="number" id="runs" name="runs">
+            </div>
+
+            <div class="form-group">
+                <label for="wickets">Wickets:</label>
+                <input type="number" id="wickets" name="wickets" min="0" max="10">
+            </div>
+
+            <div class="form-group">
+                <label for="runs_in_prev_5">Runs in Last 5 Overs:</label>
+                <input type="number" id="runs_in_prev_5" name="runs_in_prev_5">
+            </div>
+
+            <div class="form-group">
+                <label for="wickets_in_prev_5">Wickets in Last 5 Overs:</label>
+                <input type="number" id="wickets_in_prev_5" name="wickets_in_prev_5">
+            </div>
+
+            <button type="submit">Predict Score</button>
+        </form>
+
+        <h2 id="result">Predicted Score will appear here</h2>
+
+        <!-- Chart for displaying historical trends -->
+        <canvas id="scoreChart"></canvas>
+    </div>
+
+    <script>
+        document.getElementById('prediction-form').addEventListener('submit', function(event) {
+            event.preventDefault(); // Prevent the default form submission
+
+            // Get input values
+            const battingTeam = document.getElementById('batting_team').value;
+            const bowlingTeam = document.getElementById('bowling_team').value;
+            const overs = parseFloat(document.getElementById('overs').value);
+            const runs = parseInt(document.getElementById('runs').value);
+            const wickets = parseInt(document.getElementById('wickets').value);
+            const runsInPrev5 = parseInt(document.getElementById('runs_in_prev_5').value);
+            const wicketsInPrev5 = parseInt(document.getElementById('wickets_in_prev_5').value);
+
+            // Create the data object to send to the backend
+            const data = {
+                batting_team: battingTeam,
+                bowling_team: bowlingTeam,
+                overs: overs,
+                runs: runs,
+                wickets: wickets,
+                runs_in_prev_5: runsInPrev5,
+                wickets_in_prev_5: wicketsInPrev5
+            };
+
+            // Make a POST request to the backend
+            fetch('http://127.0.0.1:5000/predict', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Display the predicted score
+                document.getElementById('result').innerText = `Predicted Score: ${data.predicted_score}`;
+
+                // Update chart with predicted score
+                updateChart(data.predicted_score);
+            })
+            .catch((error) => {
+                console.error('Error:', error);
+                document.getElementById('result').innerText = 'An error occurred. Please try again.';
+            });
+        });
+
+        // Function to update chart with the predicted score
+        function updateChart(predictedScore) {
+            const ctx = document.getElementById('scoreChart').getContext('2d');
+            new Chart(ctx, {
+                type : 'line',
+                data: {
+                    labels: ['Overs'],  // X-axis labels
+                    datasets: [{
+                        label: 'Predicted Score',
+                        data: [predictedScore],
+                        backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                        borderColor: 'rgba(75, 192, 192, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+    </script>
+</body>
+</html>
